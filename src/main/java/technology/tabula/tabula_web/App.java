@@ -18,7 +18,7 @@ import technology.tabula.tabula_web.workspace.WorkspaceException;
 
 public class App {
 
-	private static final String VERSION = "1.1.0";
+	private static final String VERSION = "1.2.1";
 	
 	public static void main(String[] args) throws JsonIOException, JsonSyntaxException, IOException, WorkspaceException {
 		staticFiles.location("/public");
