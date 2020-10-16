@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import technology.tabula.ObjectExtractor;
 import technology.tabula.Page;
@@ -18,8 +20,10 @@ import technology.tabula.extractors.BasicExtractionAlgorithm;
 import technology.tabula.extractors.ExtractionAlgorithm;
 import technology.tabula.extractors.SpreadsheetExtractionAlgorithm;
 import technology.tabula.tabula_web.Utils;
+import technology.tabula.tabula_web.background.JobExecutor;
 
 public class Extractor {
+	final static Logger logger = LoggerFactory.getLogger(JobExecutor.class);
 
 	@SuppressWarnings("Convert2Diamond")
     public static List<TableWithSpecIndex> extractTables(String pdfPath, List<CoordSpec> specs) throws IOException {
@@ -54,7 +58,7 @@ public class Extractor {
 				Page area = p.getArea(spec.y1, spec.x1, spec.y2, spec.x2);
 				ExtractionAlgorithm tableExtractor = useSpreadsheetExtractionMethod ? sea : bea;
 				for (Table t: tableExtractor.extract(area)) {
-					rv.add(new TableWithSpecIndex(t, spec.spec_index));
+					rv.add(new TableWithSpecIndex(t, spec.spec_index, tableExtractor));
 				}
 			}
 		}

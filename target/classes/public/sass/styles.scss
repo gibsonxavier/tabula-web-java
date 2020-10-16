@@ -1,3 +1,12 @@
+// IGNORE THE WARNING BELOW. If you're in styles.scss, you're in the right place. :)
+/*!
+ * WARNING: Don't edit this file by hand! Instead, you should be using Compass.
+ * Edit the file in webapp/static/sass/styles.scss (or webapp/static/sass/selectors.scss)
+ * Then, run `$ compass watch` to automatically re-compile the scss file into "normal" CSS on save.
+ * Alternatively, run `$ compass compile` to re-compile the SCSS once.
+ */
+// IGNORE THAT WARNING. YOU'RE IN THE RIGHT SPOT. 
+
 @import "compass";
 @import "bootstrap-compass";
 @import "bootstrap-variables";
@@ -34,7 +43,8 @@ body {
 
 
 .navbar-fixed-top	.container {
-		margin: 0 1em;
+    width: 95%;
+    margin: 0 auto;
 	}
 
 #navbar .active {
@@ -247,7 +257,7 @@ form {
 	position: fixed;
 	top: 50px;
 	left: $sidebarWidth;
-	width: 100%;
+	width: calc(100% - 200px);
 	z-index: 101; /* gotta be >100, which is the max z-index for selections */
 	background: #d9edf7;
 	padding: 1em;
@@ -266,6 +276,26 @@ form {
 	}
 	span.filename {
 		vertical-align: middle;
+	}
+
+  #template-dropdown-container{
+		ul {
+			padding-left: 20px;
+		}
+		button { // this is the autodetected tables button
+			padding-left: 0px;
+		}
+		ul:first-of-type {
+			margin-bottom: 0px; // we're trying to make the template library <ul> and the <ul> that contains only the autodetected tables one look as if they're one <ul>
+		}
+		li a{
+			cursor: pointer;
+			color: #333;
+		}
+	}
+	#template-dropdown-templates-list-container li a {
+		cursor: pointer;
+		color: #333;
 	}
 }
 

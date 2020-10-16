@@ -7,15 +7,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="shortcut icon" href="/img/favicon.ico" type="image/x-icon">
-    <link rel="icon" href="/img/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon">
 
     <title>Tabula</title>
 
-    <link href="/css/styles.css" rel="stylesheet">
+    <base href="/"><!-- overwritten dynamically with the value of $servlet_context.getContextPath or ENV["ROOT_URI"] -->
+
+    <link href="css/styles.css" rel="stylesheet">
 
     <!-- Selector-specific CSS -->
-    <link href="/css/selectors.css" rel="stylesheet">
+    <link href="css/selectors.css" rel="stylesheet">
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!--[if lt IE 9]>
@@ -23,10 +25,10 @@
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 
-    <script type="text/javascript" src="/js/vendor/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/vendor/underscore-min.js"></script>
-    <script type="text/javascript" src="/js/vendor/backbone-min.js"></script>
-    <script type="text/javascript" src="/js/vendor/bootstrap.js"></script>
+    <script type="text/javascript" src="js/vendor/jquery.min.js"></script>
+    <script type="text/javascript" src="js/vendor/underscore-min.js"></script>
+    <script type="text/javascript" src="js/vendor/backbone-min.js"></script>
+    <script type="text/javascript" src="js/vendor/bootstrap.js"></script>
   </head>
 
 
@@ -37,14 +39,18 @@
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
       <div class="container">
         <div class="navbar-header">
-          <a class="navbar-brand" href="/">Tabula</a>
+          <a class="navbar-brand" href="">Tabula</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-            <li><a id="upload-nav" href="/">My Files</a></li>
-            <li><a id="about-nav" href="/about">About</a></li>
-            <li><a id="help-nav" href="/help">Help</a></li>
-            <li><a href="https://github.com/tabulapdf/tabula">Source Code</a></li>
+          <ul class="nav navbar-nav navbar-left">
+            <li><a id="upload-nav" href="">My Files</a></li>
+            <li><a id="templates-nav" href="mytemplates">My Templates</a></li>
+            <li><a id="about-nav" href="about">About</a></li>
+            <li><a id="help-nav" href="help">Help</a></li>
+            <li><a href="https://github.com/tabulapdf/tabula" target="_blank">Source Code</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li><a target="_blank" href="https://opencollective.com/tabulapdf">Support Tabula on OpenCollective!</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -77,7 +83,7 @@
       </script>
 
       <script type="text/template" id="export-control-panel-template">
-        <form id="download-form" action="/pdf/<%=pdf_id%>/data?format=csv" method="post">
+        <form id="download-form" action="pdf/<%=pdf_id%>/data?format=csv" method="post">
           <div id="hidden-fields">
             <input type='hidden' class='data-query' name='new_filename' value='<%=original_filename%>' >
             <input type='hidden' class='data-query' name='coords' value='<%=list_of_coords%>' >
@@ -88,13 +94,14 @@
           <select name="format" <%=disableIfNoData%> class="form-control format">
             <option value="csv">CSV</option>
             <option value="tsv">TSV</option>
-            <option value="bbox">JSON</option>
+            <option value="bbox">JSON (dimensions)</option>
+            <option value="json">JSON (data)</option>
             <!-- <option value="&#x1F4A9;SV">&#x1F4A9;SV</option> -->
             <option value="zip">zip of CSVs</option>
             <!-- <option value="xml">XML</option> -->
             <option value="script">Script</option>
           </select>
-          <button type="submit" <%=disableIfNoData%> id="download-data" class="btn btn-default" data-action='/pdf/<%=pdf_id%>/data'>
+          <button type="submit" <%=disableIfNoData%> id="download-data" class="btn btn-default" data-action='pdf/<%=pdf_id%>/data'>
             <span class="glyphicon glyphicon-refresh"></span>
             <span class="glyphicon glyphicon-download"></span>
             Export
@@ -108,10 +115,39 @@
 
       <script type="text/template" id="select-control-panel-template" >
         <span class="filename"><%= original_filename %></span>
+        <div class="dropdown" <%= disable_load_template %> style="display: inline;">
+          <button type="button" class="dropdown-toggle btn btn-info" data-toggle="dropdown" href="#" ><span class="glyphicon glyphicon-import" title="You may only load a template if there are no selections active in your PDF."></span>Templates</button>
+          <div id="template-dropdown-container" class="dropdown-menu">
+            <ul>
+              <li>
+                <a href="javascript:void(0)"><button type="button" id="save-template" class="btn btn-link" style="min-width: 155px;" <%= disable_save_template %>> <span class="button-text">Save Selections as Template</span> <span class="glyphicon glyphicon-export"></span></button></a>
+              </li>
+            </ul>
+            <p style="margin-left:5px;">Load templates:</p>
+            <div id="template-dropdown-templates-list-container">
+            </div>
+          </div>
+        </div>
 
-        <a href="javascript:void(0)"><button id="restore-detected-tables" type="button" class="btn btn-default <%= restore_detected_tables %>" <%= disable_detected_tables %>><span class="glyphicon glyphicon-flash"></span><span class="glyphicon glyphicon-refresh"></span> Autodetect Tables</button></a>
+
         <a href="javascript:void(0)"><button type="button" id="clear-all-selections" class="btn btn-default" <%= disable_clear_all_selections %>><span class="glyphicon glyphicon-remove-circle"></span> Clear All Selections</button></a>
-        <a href="javascript:void(0)"><button type="button" id="all-data" class="btn btn-success" <%= disable_download_all %>><span class="glyphicon glyphicon-eye-open"></span> Preview & Export Extracted Data</button></a>
+        <button id="restore-detected-tables" type="button" class="btn btn-default <%= restore_detected_tables %>" <%= disabled_if_there_are_selections %>><span class="glyphicon glyphicon-flash"></span><span class="glyphicon glyphicon-refresh"></span> Autodetect Tables</button>
+
+
+
+        <span style="float: right">
+          <a href="javascript:void(0)"><button type="button" id="all-data" class="btn btn-success" <%= disable_download_all %>><span class="glyphicon glyphicon-list-alt"></span> Preview & Export Extracted Data</button></a>
+        </span>
+
+
+
+
+        <span style="clear: both;">
+      </script>
+
+      <script type="text/template" id="select-sidebar-template">
+        <ul id="thumbnail-list" class="thumbnail-list">
+        </ul>
       </script>
 
       <script type="text/template" id="export-page-sidebar-template">
@@ -170,7 +206,7 @@
             <% } else if (loading) { %>
              <div class="alert alert-success" id="loading"><span id="spinner"></span><span style="position: relative; left: 16px; font-size: 24px;">Loading...</span></div>
             <% } else if (error_message) { %>
-               <p><strong>Tabula</strong> couldn't finish processing your request. We'd appreciate if you could <a href="https://github.com/jazzido/tabula/issues/new">report this error in our issue tracker</a>. If possible, please include a link to the document that caused the error and the text below:</p>
+               <p><strong>Tabula</strong> couldn't finish processing your request. <!-- We'd appreciate if you could <a href="https://github.com/jazzido/tabula/issues/new">report this error in our issue tracker</a>. If possible, please include a link to the document that caused the error and the text below: --></p>
                  <pre class="error"><%= error_message %></pre>
             <% } else { %>
               <span class="no-data">No data.</span>
@@ -190,11 +226,11 @@
           <div id="pages-container">
           </div>
         </div>
-        <nestedscript type="text/javascript" src="/js/vendor/spin.min.js"></nestedscript>
-        <nestedscript type="text/javascript" src="/js/resizableSelection.js"></nestedscript>
-        <nestedscript type="text/javascript" src="/js/rectangularSelector.js"></nestedscript>
-        <nestedscript type="text/javascript" src="/js/vendor/ZeroClipboard.min.js"></nestedscript>
-        <!-- <nestedscript type="text/javascript" src="/js/debug_pdf_view.js"></nestedscript>  -->
+        <nestedscript type="text/javascript" src="js/vendor/spin.min.js"></nestedscript>
+        <nestedscript type="text/javascript" src="js/resizableSelection.js"></nestedscript>
+        <nestedscript type="text/javascript" src="js/rectangularSelector.js"></nestedscript>
+        <nestedscript type="text/javascript" src="js/vendor/ZeroClipboard.min.js"></nestedscript>
+        <!-- <nestedscript type="text/javascript" src="js/debug_pdf_view.js"></nestedscript>  -->
       </script>
 
 
@@ -253,7 +289,7 @@
 
             <div id="upload-form-container">
               <h4>Import one or more PDFs</h4>
-              <form id="upload" action="/upload.json" method="post" enctype="multipart/form-data" class="form-inline">
+              <form id="upload" action="upload.json" method="post" enctype="multipart/form-data" class="form-inline">
 
                 <div class="input-group">
                   <!-- we are using this here: http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ -->
@@ -284,9 +320,9 @@
                   <thead>
                     <tr>
                       <th>File Name</th>
-                      <th>Size</th>
+                      <th style="min-width: 100px;">Size</th>
                       <th>Pages</th>
-                      <th>Date Added</th>
+                      <th style="min-width: 150px;">Date Added</th>
                       <th>Remove</th>
                       <th>Process</th>
                     </tr>
@@ -297,13 +333,16 @@
                 </div>
               </div>
 
+          <hr />
+          <p style="text-size: small;">If you have several PDFs with the same layout, you can select the appropriate regions once, then save the selections as a Tabula Template from the Select Tables page. If someone has shared a template with you, you can upload it to Tabula at the <a href="/mytemplates">My Templates page</a>.</p>
+
           </div> <!-- /jumbotron -->
         </div> <!-- /container -->
 
         <!-- we are using this here: http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ -->
-        <nestedscript type="text/javascript" src="/js/vendor/upload-group.js"></nestedscript>
-        <nestedscript type="text/javascript" src="/js/vendor/jquery.tablesorter.min.js"></nestedscript>
-        <nestedscript type="text/javascript" src="/js/vendor/spin.min.js"></nestedscript>
+        <nestedscript type="text/javascript" src="js/vendor/upload-group.js"></nestedscript>
+        <nestedscript type="text/javascript" src="js/vendor/jquery.tablesorter.min.js"></nestedscript>
+        <nestedscript type="text/javascript" src="js/vendor/spin.min.js"></nestedscript>
       </script>
 
       <script type="text/template" id="uploaded-file-template">
@@ -312,7 +351,23 @@
         <td><%= page_count || '??' %></td>
         <td><%= new Date(parseInt(time) * 1000).toUTCString().slice(5, -7) %></td>
         <td><a href="javascript:"><span data-filename=<%= original_filename %> data-pdfid=<%= id %> class="glyphicon glyphicon-remove delete-pdf"></span></a></td>
-        <td><a href="/pdf/<%= id %>"><button type="button" class="btn btn-sm btn-success">Extract Data</button></a></td>
+        <td><a href="pdf/<%= id %>"><button type="button" class="btn btn-sm btn-success">Extract Data</button></a></td>
+      </script>
+
+      <script type="text/template" id="saved-template-library-item-template">
+        <td><span class="template-name"><%= name %></span> <a href="javascript:"><span data-name=<%= name %> data-templateid=<%= id %> class="glyphicon glyphicon-pencil edit-template-name"></span></a></td>
+        <td><%= selection_count %> selection<%= selection_count == "!" ? '' : 's' %></td>
+        <td><%= page_count || '??' %></td>
+        <td><%= new Date(parseInt(time) * 1000).toUTCString().slice(5, -7) %></td>
+        <td><a href="javascript:"><span data-name=<%= name %> data-templateid=<%= id %> class="glyphicon glyphicon-remove delete-template"></span></a></td>
+        <td>
+          <form class="template-download-form" action="templates/<%= id %>.json" method="get" style="margin-bottom: 0;">
+            <button type="submit" class="btn btn-default" data-action=>
+              <span class="glyphicon glyphicon-download-alt download-template"></span>
+              Download
+            </button>
+          </form>
+        </td>
       </script>
 
       <script type="text/template" id="upload-error-template" >
@@ -331,8 +386,6 @@
 
       <script type="text/template" id="about-template">
         <div class="container">
-           <a href="https://github.com/tabulapdf/tabula"><img style="z-index: 10000; position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
-
           <div class="jumbotron about">
 
             <h1>About Tabula</h1>
@@ -349,10 +402,64 @@
             <p>And researchers of all kinds use Tabula to turn PDF reports into Excel spreadsheets, CSVs, and JSON files for use in analysis and database applications.</p>
 
             <h2>Credits</h2>
-            <p>Tabula was created by <a href="http://jazzido.com/" target="_blank">Manuel Aristarán</a>, <a href="https://mike.tig.as/" target="_blank">Mike Tigas</a> and <a href="http://jeremybmerrill.com/" target="_blank">Jeremy B. Merrill</a> with the support of <a href="https://www.propublica.org">ProPublica</a>, <a href="http://blogs.lanacion.com.ar/data/">La Nación DATA</a>, <a href="https://opennews.org/">Knight-Mozilla OpenNews</a>, <a href="http://www.nytimes.com">The New York Times</a>, <a href="http://knightlab.northwestern.edu/">Northwestern University Knight Lab</a>, and <a href="http://www.knightfoundation.org/">The Knight Foundation</a>. Tabula was designed by <a href="http://jasondas.com">Jason Das.</a></p>
+            <p>Tabula was created by <a href="https://jazzido.com/" target="_blank">Manuel Aristarán</a>, <a href="https://mike.tig.as/" target="_blank">Mike Tigas</a> and <a href="http://jeremybmerrill.com/" target="_blank">Jeremy B. Merrill</a> with the support of <a href="https://www.propublica.org">ProPublica</a>, <a href="http://blogs.lanacion.com.ar/data/">La Nación DATA</a>, <a href="https://opennews.org/">Knight-Mozilla OpenNews</a>, <a href="http://www.nytimes.com">The New York Times</a>, <a href="http://knightlab.northwestern.edu/">Northwestern University Knight Lab</a>, <a href="http://www.knightfoundation.org/">The Knight Foundation</a>, and <a href="https://shuttleworthfoundation.org/">The Shuttleworth Foundation</a>. Tabula was designed by <a href="http://jasondas.com">Jason Das.</a></p>
           </div> <!-- /jumbotron -->
         </div> <!-- /container -->
        </script>
+
+      <script type="text/templates" id="templates-template">
+        <div class="container">
+          <div class="jumbotron help">
+            <h1>My Saved Templates</h1>
+            <p style="font-size: small;">If you have several PDFs with the same layout, you can select the appropriate regions once, then save the selections as a Tabula Template, and load it in subsequent PDFs. You can see your saved templates here; you can also rename and delete them. If someone has shared a template with you, you can import it to Tabula here.</p>
+            <p>To use a template, <a href="">upload a file</a> or select it from <a href="">My Files</a>.</p>
+            <div id="template-library-container">
+              <div id="file-list-container">
+              <table class="table file-list" id="templateTable">
+                <thead>
+                  <tr>
+                    <th>Template Name</th>
+                    <th>Selection Count</th>
+                    <th>Page Count</th>
+                    <th>Date Added</th>
+                    <th>Remove</th>
+                    <th>Download</th>
+                  </tr>
+                </thead>
+                <tbody id="saved-templates-container">
+                </tbody>
+              </table>
+              </div>
+            </div>
+
+            <div id="template-upload-form-container">
+              <h2>Import one or more Tabula Templates</h2>
+              <p style="font-size: small;">Once you save a Tabula Template, it'll appear here.</p>
+              <form id="uploadtemplate" action="templates/upload.json" method="post" enctype="multipart/form-data" class="form-inline">
+
+                <div class="input-group">
+                  <!-- we are using this here: http://www.abeautifulsite.net/whipping-file-inputs-into-shape-with-bootstrap-3/ -->
+                  <span class="input-group-btn">
+                      <span class="btn btn-primary btn-file">
+                          Browse&hellip; <input type="file" id="file" name="files[]" multiple accept="application/json">
+                      </span>
+                  </span>
+                  <input type="text" class="form-control" readonly>
+                </div>
+
+                <!-- fix for the fact that IE11 is trash https://blog.yorkxin.org/posts/2014/02/06/ajax-with-formdata-is-broken-on-ie10-ie11/ -->
+                <input type="hidden" name="_dontcare">
+
+                <button type="submit" class="btn btn-default">Import</button>
+              </form>
+
+            </div>
+          </div> <!-- /jumbotron -->
+        </div> <!-- /container -->
+        <nestedscript type="text/javascript" src="js/vendor/upload-group.js"></nestedscript>
+        <nestedscript type="text/javascript" src="js/vendor/jquery.tablesorter.min.js"></nestedscript>
+      </script>
+
 
       <script type="text/template" id="help-template">
         <div class="container">
@@ -372,14 +479,22 @@
           <li><strong>Tabula said "Sorry, your PDF file is image-based" -- what does that mean?</strong> Your PDF does not have any embedded text. It might have been scanned from paper. Tabula is not able to extract any data from image-based PDFs. You can try OCRing the PDF with a tool like Adobe Acrobat Pro (paid), Tesseract, <a href="http://www.tobias-elze.de/pdfsandwich/">PDFSandwich</a> (Mac/Linux, free) or <a href="https://code.google.com/p/lime-ocr/">Lime OCR</a> (Windows, free) and then trying Tabula again.</li>
           <li><strong>Some columns of my table are combined. What can I do?</strong> Tabula sometimes uses "streams" of whitespace to recreate your table's structure. If headers span multiple columns, they're probably causing a problem. Try excluding them from your selection (or selecting them separately). </li>
           <li><strong>Some columns of my table are combined. And the headers aren't the problem! What <em>else</em> can I do?</strong> Tabula has two extraction methods. It tries to guess which one is right for document, but it's wrong sometimes. Try selecting the other (of "stream" and "lattice"), on the left in extraction mode, to see if that fixes the problem.</li>
+          <li><strong>Tabula helps, but my extracted data isn't in the layout I want! How can I fix <em>that</em>?</strong> Tabula tries to recreate the table structure of the original document. You can think of Tabula as a data <em>extraction</em> tool rather than a data <em>transformation</em> tool. If you want to clean and transform your exported CSV or TSV, tools such as <a href="http://openrefine.org/">OpenRefine</a> or a spreadsheet program might be a good place to start.</li>
           <li><strong>Tabula's taking too long!</strong> Sorry! Tabula has to do a lot of weird math to reconstruct your table. Tabula's command-line counterpart, <a href="https://www.github.com/tabulapdf/tabula-extractor">tabula-extractor</a> is faster, but a little harder to use. You might give it a try.</li>
-          <li><strong>I had some other problem!</strong> Sorry! You can <a href="https://www.github.com/tabulapdf/tabula/issues/new">report it to us here</a>. Be sure to include your PDF, either as a link or attached to the issue -- or email it to <a href="/about">one of the Tabula creators.</a> </li>
+          <!-- li><strong>I had some other problem!</strong> Sorry! You can <a href="https://www.github.com/tabulapdf/tabula/issues/new">report it to us here</a>. Be sure to include your PDF, either as a link or attached to the issue -- or email it to <a href="about">one of the Tabula creators.</a> </li -->
           </ol>
 
           </div> <!-- /jumbotron -->
         </div> <!-- /container -->
        </script>
-
+       <script type="text/template" id="notifications-approval-template">
+          <div id="notifications-approval-clicky">
+            Tabula can check for new versions and notifications from the developers and tell you about them. We count these requests to get a rough estimate of how many times Tabula is used per day (instead of Google Analytics). We never receive any information about what PDFs you extract with Tabula.
+            <input type="button" id="notifications-approval-okay" value="Okay! Notify me and count me." />
+            <input type="button" id="notifications-approval-opt-out" value="No thanks" />
+            <a id="notifications-approval-close" >✕</a>
+          </div>
+       </script>
 
     </div> <!-- /templates -->
 
@@ -392,7 +507,8 @@
 
     </script> <!-- TODO: move this to tabula.js, only run it if we're in upload page viewer -->
 
-    <script type="text/javascript" src="/js/tabula.js?_cachebuster=201510300905"></script> <!-- actually starts Tabula -->
+    <script type="text/javascript" src="js/tabula.js?_cachebuster=201510300905"></script> <!-- actually starts Tabula -->
+    <script type="text/javascript" src="js/template_library.js?_cachebuster=201510300905"></script> <!-- needed on almost all pages -->
 
   </body>
 </html>

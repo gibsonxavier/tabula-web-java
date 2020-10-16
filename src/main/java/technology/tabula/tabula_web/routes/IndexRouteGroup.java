@@ -16,8 +16,12 @@ public class IndexRouteGroup implements RouteGroup {
     private static final String index;
 
     static {
-        index = new Scanner(App.class.getClassLoader().getResourceAsStream("public/index.html"), "UTF-8").useDelimiter("\\A").next();
+        index = extracted().next();
     }
+
+	private static Scanner extracted() {
+		return new Scanner(App.class.getClassLoader().getResourceAsStream("public/index.html"), "UTF-8").useDelimiter("\\A");
+	}
 
     private static final String[] indexes = new String[]{"pdf/:file_id", "help", "about"};
     private WorkspaceDAO workspaceDAO;

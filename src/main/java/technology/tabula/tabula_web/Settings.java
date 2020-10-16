@@ -24,10 +24,11 @@ public class Settings {
 	    if (osName.contains("Windows")) {
 	        // APPDATA is in a different place (under user.home) depending on
 	        // Windows OS version. so use that env var directly, basically
-	        String appdata = System.getenv("APPDATA");
-	        if (appdata == null) {
-	          appdata = java.lang.System.getProperty("user.home");
-	        }
+//	        String appdata = System.getenv("APPDATA");
+//	        if (appdata == null) {
+//	          appdata = java.lang.System.getProperty("user.home");
+//	        }
+	    	String appdata = "C:/TabulaApp/";
 	        dataDir = new java.io.File(appdata, "/Tabula").getPath();
 	    }
 	    else if (osName.contains("Mac")) {

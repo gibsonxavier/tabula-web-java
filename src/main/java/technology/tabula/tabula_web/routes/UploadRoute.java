@@ -49,10 +49,11 @@ public class UploadRoute implements Route {
 		Part part = request.raw().getPart("files[]");
 		String originalFilename = part.getSubmittedFileName();
 		String documentId = UUID.randomUUID().toString();
-		
-		try (InputStream input = part.getInputStream()) {
+		if (originalFilename != null && !originalFilename.isEmpty()) 
+		{
+			try (InputStream input = part.getInputStream()) {
             workspaceDAO.addFile(input, documentId, "document.pdf");
-		}
+			}
 		
 		UUID jobBatch = UUID.randomUUID();
 		JobExecutor executor = JobExecutor.getInstance();
@@ -72,6 +73,13 @@ public class UploadRoute implements Route {
         resp.add(new UploadStatus(originalFilename, true, documentId, jobBatch.toString()));
 
 		return resp;
-	}
+		}
+		else {
+	        ArrayList<UploadStatus> resp = new ArrayList<UploadStatus>();
+	        resp.add(new UploadStatus("No File Found", false, "Null", "Null"));
+	        return resp;
+			
+		}
+		}
 
 }

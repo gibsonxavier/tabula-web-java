@@ -22,7 +22,8 @@ import spark.Route;
 import technology.tabula.Cell;
 import technology.tabula.RectangularTextContainer;
 import technology.tabula.TextChunk;
-import technology.tabula.json.TextChunkSerializer;
+import technology.tabula.json.RectangularTextContainerSerializer;
+import technology.tabula.tabula_web.background.JobExecutor;
 import technology.tabula.tabula_web.extractor.CoordSpec;
 import technology.tabula.tabula_web.extractor.Extractor;
 import technology.tabula.tabula_web.extractor.TableWithSpecIndex;
@@ -31,7 +32,11 @@ import technology.tabula.tabula_web.workspace.WorkspaceDAO;
 import technology.tabula.writers.CSVWriter;
 import technology.tabula.writers.TSVWriter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ExtractDataRoute implements Route {
+	final static Logger logger = LoggerFactory.getLogger(JobExecutor.class);
 
     static class TableSerializerExclusionStrategy implements ExclusionStrategy {
 
@@ -85,7 +90,7 @@ public class ExtractDataRoute implements Route {
             case "csv":
                 sb = new StringBuilder();
                 for (TableWithSpecIndex t : tables) {
-                    new CSVWriter().write(sb, t);
+                    new CSVWriter().write(sb, t.table);
                 }
 
                 response.type("text/csv");
@@ -95,7 +100,7 @@ public class ExtractDataRoute implements Route {
             case "tsv":
                 sb = new StringBuilder();
                 for (TableWithSpecIndex t : tables) {
-                    new TSVWriter().write(sb, t);
+                    new TSVWriter().write(sb, t.table);
                 }
 
                 response.type("text/csv");
@@ -112,7 +117,7 @@ public class ExtractDataRoute implements Route {
                     zos.putNextEntry(entry);
 
                     sb = new StringBuilder();
-                    new CSVWriter().write(sb, t);
+                    new CSVWriter().write(sb, t.table);
                     zos.write(sb.toString().getBytes("UTF-8"));
                     zos.closeEntry();
                 }
@@ -125,13 +130,14 @@ public class ExtractDataRoute implements Route {
                 Gson gson = new GsonBuilder()
                         .addSerializationExclusionStrategy(new TableSerializerExclusionStrategy())
                         .registerTypeAdapter(TableWithSpecIndex.class, new TableWithSpecIndexSerializer())
-                        .registerTypeAdapter(RectangularTextContainer.class, new TextChunkSerializer())
-                        .registerTypeAdapter(Cell.class, new TextChunkSerializer())
-                        .registerTypeAdapter(TextChunk.class, new TextChunkSerializer())
+        				.registerTypeAdapter(RectangularTextContainer.class, RectangularTextContainerSerializer.INSTANCE)
+        				.registerTypeAdapter(Cell.class, RectangularTextContainerSerializer.INSTANCE)
+        				.registerTypeAdapter(TextChunk.class, RectangularTextContainerSerializer.INSTANCE)
                         .create();
-
                 response.type("application/json");
-                return gson.toJson(tables);
+                String resp = gson.toJson(tables);
+                logger.info(resp);
+                return resp;
 
             case "bbox":
                 response.type("application/json");
